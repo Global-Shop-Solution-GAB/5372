@@ -1,0 +1,103 @@
+Program.Sub.ScreenSU.Start
+Program.Sub.ScreenSU.End
+
+Program.Sub.Preflight.Start
+
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+'Coded by: BLS
+'Project Start Date: 1/11/2016
+'Hooks:
+' 12040 SO Line Part Hook
+'12450 SO Line part hook (short form)
+' 10290 Quote Line Part Hook
+' 14051 S&D Part Change Hook (optional) will over ride rev selected in browser
+' 10130 Part Maint
+
+'
+'Notes:
+'  'Wrote for Sweed
+' scope of project - fills in part rev field automatically with latest REV (sort order of REV) when part number is keyed into the part field [TAB]
+' SO line/quote line/S&D
+
+V.Local.sFile.Declare(String)
+V.Local.sText.Declare(String)
+V.Local.bExists.Declare(Boolean)
+V.Local.ssql.Declare(String)
+V.Local.DueDate.Declare(String)
+V.Local.sYear.Declare(String)
+V.Local.sMonth.Declare(String)
+V.Local.sDay.Declare(String)
+V.Local.BIRPTID.Declare(String)
+V.Local.srptLoc.Declare(String)
+
+
+' SO line part hook
+F.Intrinsic.Control.If(V.Caller.Hook,=,12040)
+'query by part to get last REV by desc sort order and fill in Rev field with value
+	Function.ODBC.Connection!Conx.OpenConnection(Variable.ambient.PDSN,Variable.Ambient.PUSER,Variable.Ambient.PPass)
+	F.Intrinsic.String.Concat("SELECT TOP 1 SUBSTRING(PART, 1, 17) as ","PartNbr",",","SUBSTRING(PART,18,3)AS ","PartRev"," FROM V_INVENTORY_MSTR WHERE PartNbr='",V.pASSED.000052,"'", " and Location='",V.pASSED.000054,"'"," order by PartRev DESC",V.local.sSql)
+	Function.ODBC.Connection!Conx.OpenRecordsetRO("rstSO",V.Local.sSql)
+	F.Intrinsic.Control.If(V.ODBC.Conx!rstSO.EOF,=,False)
+'	F.Intrinsic.Control.AndIf(V.Passed.000056,=,"")
+	V.Passed.000053.Set(V.ODBC.Conx!rstSO.FieldValTrim!PartRev)
+	F.Intrinsic.Control.EndIf
+	F.ODBC.Conx!rstSO.Close
+
+' SO line part hook (short form)
+F.Intrinsic.Control.ElseIf(V.Caller.Hook,=,12450)
+
+'query by part to get last REV by desc sort order and fill in Rev field with value
+	Function.ODBC.Connection!Conx.OpenConnection(Variable.ambient.PDSN,Variable.Ambient.PUSER,Variable.Ambient.PPass)
+	F.Intrinsic.String.Concat("SELECT TOP 1 SUBSTRING(PART, 1, 17) as ","PartNbr",",","SUBSTRING(PART,18,3)AS ","PartRev"," FROM V_INVENTORY_MSTR WHERE PartNbr='",V.pASSED.000071,"'", " and Location='",V.pASSED.000073,"'"," order by PartRev DESC",V.local.sSql)
+	Function.ODBC.Connection!Conx.OpenRecordsetRO("rstSO",V.Local.sSql)
+	F.Intrinsic.Control.If(V.ODBC.Conx!rstSO.EOF,=,False)
+'	F.Intrinsic.Control.AndIf(V.Passed.000056,=,"")
+	V.Passed.000072.Set(V.ODBC.Conx!rstSO.FieldValTrim!PartRev)
+	F.Intrinsic.Control.EndIf
+	F.ODBC.Conx!rstSO.Close
+
+
+' Quote line part hook	
+F.Intrinsic.Control.ElseIf(V.Caller.Hook,=,10290)
+'query by part to get last REV by desc sort order and fill in Rev field with value
+	Function.ODBC.Connection!Conx.OpenConnection(Variable.ambient.PDSN,Variable.Ambient.PUSER,Variable.Ambient.PPass)
+	F.Intrinsic.String.Concat("SELECT TOP 1 LOCATION,SUBSTRING(PART, 1, 17) as ","PartNbr",",","SUBSTRING(PART,18,3)AS ","PartRev"," FROM V_INVENTORY_MSTR WHERE PartNbr='",V.pASSED.000052,"'", " and Location='",V.pASSED.000054,"'"," order by PartRev DESC",V.local.sSql)
+	Function.ODBC.Connection!Conx.OpenRecordsetRO("rstQT",V.Local.sSql)
+	F.Intrinsic.Control.If(V.ODBC.Conx!rstQT.EOF,=,False)
+	V.Passed.000053.Set(V.ODBC.Conx!rstQT.FieldValTrim!PartRev)
+	V.Passed.000054.Set(V.ODBC.Conx!rstQT.FieldValTrim!LOCATION)
+	F.Intrinsic.Control.EndIf
+	F.ODBC.Conx!rstQT.Close
+
+' Part Maint part hook	
+F.Intrinsic.Control.ElseIf(V.Caller.Hook,=,10130)
+	Function.ODBC.Connection!Conx.OpenConnection(Variable.ambient.PDSN,Variable.Ambient.PUSER,Variable.Ambient.PPass)
+	F.Intrinsic.String.Concat("SELECT TOP 1 SUBSTRING(PART, 1, 17) as ","PartNbr",",","SUBSTRING(PART,18,3)AS ","PartRev"," FROM V_INVENTORY_MSTR WHERE PartNbr='",V.pASSED.000007,"'", " and Location='",V.pASSED.000008,"'"," order by PartRev DESC",V.local.sSql)
+	Function.ODBC.Connection!Conx.OpenRecordsetRO("rstPart",V.Local.sSql)
+	F.Intrinsic.Control.If(V.ODBC.Conx!rstPart.EOF,=,False)
+'	F.Intrinsic.Control.AndIf(V.Passed.000012,=,"")
+	V.Passed.000008.Set(V.ODBC.Conx!rstPart.FieldValTrim!PartRev)
+	F.Intrinsic.Control.EndIf
+	F.ODBC.Conx!rstPart.Close
+
+' S&D part hook	
+F.Intrinsic.Control.ElseIf(V.Caller.Hook,=,14051)
+	Function.ODBC.Connection!Conx.OpenConnection(Variable.ambient.PDSN,Variable.Ambient.PUSER,Variable.Ambient.PPass)
+	F.Intrinsic.String.Concat("SELECT TOP 1 SUBSTRING(PART, 1, 17) as ","PartNbr",",","SUBSTRING(PART,18,3)AS ","PartRev"," FROM V_INVENTORY_MSTR WHERE PartNbr='",V.pASSED.000003,"'", " and Location='",V.pASSED.000004,"'"," order by PartRev DESC",V.local.sSql)
+	Function.ODBC.Connection!Conx.OpenRecordsetRO("rstSD",V.Local.sSql)
+	F.Intrinsic.Control.If(V.ODBC.Conx!rstSD.EOF,=,False)
+'	F.Intrinsic.Control.AndIf(V.Passed.000003,<>,"")
+'	F.Intrinsic.Control.AndIf(V.Passed.000006,=,"")
+	V.Passed.000099.Set(V.ODBC.Conx!rstSD.FieldValTrim!PartRev)
+	F.Intrinsic.Control.EndIf
+	F.ODBC.Conx!rstSD.Close
+
+F.Intrinsic.Control.EndIf
+'F.Intrinsic.Debug.ShowCallerInfo
+F.Intrinsic.Control.End
+
+Program.Sub.Main.End
+
+
